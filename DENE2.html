@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL H, i ve R Harfleri</title>
+    <style>
+        canvas { 
+            width: 100%; 
+            height: 100%; 
+        }
+    </style>
+</head>
+<body>
+    <canvas id="glcanvas"></canvas>
+    <script>
+        function initWebGL(canvas) {
+            return canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        }
+
+        function initShaders(gl) {
+            const vertexShaderSource = `
+                attribute vec2 aVertexPosition;
+                attribute vec4 aVertexColor;
+                varying vec4 vColor;
+                void main(void) {
+                    gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+                    vColor = aVertexColor;
+                }
+            `;
+
+            const fragmentShaderSource = `
+                precision mediump float;
+                varying vec4 vColor;
+                void main(void) {
+                    gl_FragColor = vColor;
+                }
+            `;
+
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vertexShaderSource);
+            gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource);
+            gl.compileShader(fragmentShader);
+
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            gl.useProgram(shaderProgram);
+
+            return shaderProgram;
+        }
+
+        function initBuffers(gl) {
+            const scale = 0.25;
+            const vertices = new Float32Array([
+                // H sol dk
+                -2.5 * scale,  0.8 * scale,  
+                -2.3 * scale,  0.8 * scale,  
+                -2.5 * scale, -0.8 * scale,  
+                -2.5 * scale, -0.8 * scale,  
+                -2.3 * scale,  0.8 * scale,  
+                -2.3 * scale, -0.8 * scale,  
+
+                // H sağ dk
+                -1.1 * scale,  0.8 * scale,  
+                -0.9 * scale,  0.8 * scale,  
+                -1.1 * scale, -0.8 * scale,  
+                -1.1 * scale, -0.8 * scale,  
+                -0.9 * scale,  0.8 * scale,  
+                -0.9 * scale, -0.8 * scale,  
+
+                // H orta dk
+                -2.3 * scale,  0.1 * scale,  
+                -1.1 * scale,  0.1 * scale,  
+                -2.3 * scale, -0.1 * scale,  
+                -2.3 * scale, -0.1 * scale,  
+                -1.1 * scale,  0.1 * scale,  
+                -1.1 * scale, -0.1 * scale,  
+
+                // i gövde
+                -0.3 * scale,  0.8 * scale,  
+                -0.1 * scale,  0.8 * scale,  
+                -0.3 * scale, -0.8 * scale,  
+                -0.3 * scale, -0.8 * scale,  
+                -0.1 * scale,  0.8 * scale,  
+                -0.1 * scale, -0.8 * scale,  
+
+                // i nokta (kare)
+                -0.3 * scale,  1.1 * scale,  
+                -0.1 * scale,  1.1 * scale,  
+                -0.3 * scale,  0.9 * scale,  
+                -0.3 * scale,  0.9 * scale,  
+                -0.1 * scale,  1.1 * scale,  
+                -0.1 * scale,  0.9 * scale,  
+
+                // R sol dk - S-T-V-V-U-S
+                0.5 * scale,  0.8 * scale,  
+                0.7 * scale,  0.8 * scale,  
+                0.5 * scale, -0.8 * scale,  
+                0.5 * scale, -0.8 * scale,  
+                0.7 * scale,  0.8 * scale,  
+                0.7 * scale, -0.8 * scale,  
+				
+				//R üst dk - T-W-Z-Z-A1-T
+				0.7 * scale,  0.8 * scale,  
+                1.5 * scale,  0.8 * scale,  
+                1.5 * scale,  0.6 * scale,  
+                1.5 * scale,  0.6 * scale,  
+                0.7 * scale,  0.6 * scale,  
+                0.7 * scale,  0.8 * scale,
+				
+				//R sağ dk - D1-Z-C1-C1-B1-D1
+				1.3 * scale,  0.6 * scale,  
+                1.5 * scale,  0.6 * scale,  
+                1.5 * scale,  0.0 * scale,  
+                1.5 * scale,  0.0 * scale,  
+                1.3 * scale,  0.0 * scale,
+                1.3 * scale,  0.6 * scale,
+				
+				//R al dk - B1-E1-F1-F1-G1-B1-D1
+				1.3 * scale,  0.0 * scale,  
+                0.7 * scale,  0.0 * scale,  
+                0.7 * scale,  0.2 * scale,  
+                0.7 * scale,  0.2 * scale,  
+                1.3 * scale,  0.2 * scale,  
+                1.3 * scale,  0.0 * scale,
+				
+				//R çapraz dk - H1-I1-J1-J1-K1-h1
+				0.7 * scale,  -0.2 * scale,  
+                0.9 * scale,  0.0 * scale,  
+                1.5 * scale,  -0.6 * scale,  
+                1.5 * scale,  -0.6 * scale,  
+                1.3 * scale,  -0.8 * scale,  
+                0.7 * scale,  -0.2 * scale,
+				
+				//A sol dk - M-R-P-P-Q-M
+				2.2 * scale,  -0.8 * scale,  
+                2.2 * scale,  0.6 * scale,  
+                2.4 * scale,  0.6 * scale,  
+                2.4 * scale,  0.6 * scale,  
+                2.4 * scale,  -0.8 * scale,  
+                2.2 * scale,  -0.8 * scale,
+				
+				//A üst dk - L-N-U-U-R-L
+				2.2 * scale,  0.8 * scale,  
+                3.2 * scale,  0.8 * scale,  
+                3.2 * scale,  0.6 * scale,  
+                3.2 * scale,  0.6 * scale,  
+                2.2 * scale,  0.6 * scale,  
+                2.2 * scale,  0.8 * scale,
+				
+				//A sağ dk - S-U-O-O-T-S
+				3.0 * scale,  0.6 * scale,  
+                3.2 * scale,  0.6 * scale,  
+                3.2 * scale,  -0.8 * scale,  
+                3.2 * scale,  -0.8 * scale,  
+                3.0 * scale,  -0.8 * scale,  
+                3.0 * scale,  0.6 * scale,
+				
+				//A orta dk - W-A-Z-Z-V-W
+				2.4 * scale,  0.0 * scale,  
+                3.0 * scale,  0.0 * scale,  
+                3.0 * scale,  -0.2 * scale,  
+                3.0 * scale,  -0.2 * scale,  
+                2.4 * scale,  -0.2 * scale,  
+                2.4 * scale,  0.0 * scale,
+            ]);
+
+            const colors = new Float32Array([
+                // H renk (Yeşil)
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+
+                // H renk (Yeşil)
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+
+                // H renk (Yeşil)
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+
+                // i renk (Mavi)
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+
+                // i renk (Mavi)
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+                0.0, 0.0, 1.0, 1.0,
+
+                // R renk (Kırmızı)
+                1.0, 0.0, 0.0, 1.0,
+                1.0, 0.0, 0.0, 1.0,
+                1.0, 0.0, 0.0, 1.0,
+                1.0, 0.0, 0.0, 1.0,
+                1.0, 0.0, 0.0, 1.0,
+                1.0, 0.0, 0.0, 1.0,
+				
+				//R renk (Kırmızı)
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				
+				//R renk (Kırmızı)
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				
+				//R renk (Kırmızı)
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				
+				//R çapraz dk renk (Kırmızı)
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				
+				//A renk (Sarı)
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				
+				//A renk (Sarı)
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				
+				//A renk (Sarı)
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				
+				//A renk (Sarı)
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+            ]);
+
+            const vertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            const colorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+
+            return { vertex: vertexBuffer, color: colorBuffer };
+        }
+
+        function drawScene(gl, shaderProgram, buffers) {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            const vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+            gl.enableVertexAttribArray(vertexPositionAttribute);
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffers.vertex);
+            gl.vertexAttribPointer(vertexPositionAttribute, 2, gl.FLOAT, false, 0, 0);
+
+            const vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+            gl.enableVertexAttribArray(vertexColorAttribute);
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+            gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 84);
+        }
+
+        function main() {
+            const canvas = document.getElementById("glcanvas");
+            const gl = initWebGL(canvas);
+            if (!gl) {
+                alert("Unable to initialize WebGL. Your browser may not support it.");
+                return;
+            }
+
+            const shaderProgram = initShaders(gl);
+            const buffers = initBuffers(gl);
+
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.viewport(0, 0, canvas.width, canvas.height);
+
+            drawScene(gl, shaderProgram, buffers);
+        }
+
+        window.onload = main;
+   </script>
+</body>
+</html>
